@@ -51,7 +51,7 @@ const observableOne = of('observableOne');
 const observableTwo = of('observableTwo');
 
 console.log(1);
-observableTwo.pipe(observeOn(asyncScheduler)).subscribe(console.log); // asapScheduler performs macro task
+observableTwo.pipe(observeOn(asyncScheduler)).subscribe(console.log); // asyncScheduler performs macro task
 observableOne.pipe(observeOn(asapScheduler)).subscribe(console.log); // asapScheduler performs micro task -
 // runs first, before macro tasks such as setTimeout()
 console.log(2);
@@ -92,3 +92,8 @@ from([1, 2, 3]);
 ```
 
 ## 2. RxJS operators
+
+Operatory to funkcje w RxJS, które dzielimy na 2 grupy:
+
+- **Pipeable Operators**, czyli takie któr używamy na istniejącej observable w pipe, bierze ona pierwotną observable i zwraca nowa - zmodyfikowaną np. poprzez użycie map, filter czy merge map
+- **Creation Operators** , np of(), czy from() czyli takie, które mogą byc wywłane jako nizależne funkcje tworząc nowe Observable
