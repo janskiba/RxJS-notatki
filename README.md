@@ -1,5 +1,3 @@
-# RxJS - kurs
-
 ## 1. Podstawy i definicje
 
 ### Observable
@@ -152,4 +150,62 @@ of(1, 2, 3, 4, 5, 6)
   .subscribe(console.log);
 
 // console output: 1, 2
+```
+
+## 3. Reaktywne podejście do zarządania sybskrypcjami
+
+### async pipe
+
+Async pipe pozwala na prostszą obsługę observables w widoku aplikacji. Nie trzeba subskrybować i odsybskryboiwywać w pliku ts wystarczy to zrobić w pliku .html, a unsubscribe będzie automatyczne.
+
+**przed:**
+
+```tsx
+export class ProductListComponent implements OnInit, OnDestroy {
+  pageTitle = 'Product List';
+  errorMessage = '';
+  categories: ProductCategory[] = [];
+
+  products: Product[] = [];
+  sub!: Subscription;
+
+  constructor(private productService: ProductService) {}
+
+  ngOnInit(): void {
+    this.sub = this.productService.getProducts().subscribe({
+      next: (products) => (this.products = products),
+      error: (err) => (this.errorMessage = err),
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+}
+```
+
+**po:**
+
+```tsx
+export class ProductListComponent implements OnInit {
+  pageTitle = 'Product List';
+  errorMessage = '';
+  categories: ProductCategory[] = [];
+
+  products$: Observable<Product[]> | undefined;
+
+  constructor(private productService: ProductService) {}
+
+  ngOnInit(): void {
+    this.products$ = this.productService.getProducts();
+  }
+}
+```
+
+**W pliku .html systarczy użyć aync pipe:**
+
+```html
+<table class="table mb-0" *ngIf="products$ | async as products">
+  <!-- 'products' as normal variable  -->
+</table>
 ```
