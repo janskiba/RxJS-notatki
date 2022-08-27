@@ -97,3 +97,59 @@ Operatory to funkcje w RxJS, które dzielimy na 2 grupy:
 
 - **Pipeable Operators**, czyli takie któr używamy na istniejącej observable w pipe, bierze ona pierwotną observable i zwraca nowa - zmodyfikowaną np. poprzez użycie map, filter czy merge map
 - **Creation Operators** , np of(), czy from() czyli takie, które mogą byc wywłane jako nizależne funkcje tworząc nowe Observable
+
+### map()
+
+Operator map() służy do zmiany każdej wartośći przekazanej do observable na podstawie logiki przekazanej wewnątrz map(). Dla każdego elemntu zwraca nową, zmienioną observable.
+
+```tsx
+import { from, map } from 'rxjs';
+
+from([1, 2, 3, 4, 5, 6])
+  .pipe(map((el) => el * 2))
+  .subscribe(console.log);
+
+// console output: 2, 4, 6, 8, 10, 12
+```
+
+### tap()
+
+Operator tap() służy do wykonywania operacji które nie pływają na emitowane elementy. Jego output observable jest zawsze identyczna input observable. Przydaje się przy debugowaniu czy wykonowyania akcji które mają być efektem ubocznym, np ziwększanie countera poza observable czy ustawianie zmiennej boolean mającej włączać/wyłączać spinner
+
+```tsx
+import { of, map, tap } from 'rxjs';
+
+let counter = 0;
+
+of(1, 2, 3, 4, 5, 6)
+  .pipe(
+    map((el) => el * 2),
+    tap(() => counter++),
+    map((el) => el - 1),
+    tap((el) => console.log(el))
+  )
+  .subscribe({
+    complete: () => console.log('counter = ', counter),
+  });
+
+//console output: 1, 3 ,7 9, 11
+//counter = 6
+```
+
+### take()
+
+Take emituje tylko określona liczbę elemntów określoną przez observabel, przydaje się np kiedy potrzbujemy tylko kiklu pierwszych wartości. Kończy się (jest complete) jeśli przyjmie wystarczającą ilość elementów
+
+```tsx
+import { of, map, take } from 'rxjs';
+
+of(1, 2, 3, 4, 5, 6)
+  .pipe(
+    map((el) => el * 2),
+    take(2),
+    map((el) => el - 1)
+  )
+  .subscribe(console.log);
+
+// console output: 1, 2
+```
