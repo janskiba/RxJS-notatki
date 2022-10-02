@@ -1,3 +1,5 @@
+# RxJS - notatki
+
 ## 1. Podstawy i definicje
 
 ### Observable
@@ -49,7 +51,7 @@ const observableOne = of('observableOne');
 const observableTwo = of('observableTwo');
 
 console.log(1);
-observableTwo.pipe(observeOn(asyncScheduler)).subscribe(console.log); // asyncScheduler performs macro task
+observableTwo.pipe(observeOn(asyncScheduler)).subscribe(console.log); // asapScheduler performs macro task
 observableOne.pipe(observeOn(asapScheduler)).subscribe(console.log); // asapScheduler performs micro task -
 // runs first, before macro tasks such as setTimeout()
 console.log(2);
@@ -156,7 +158,7 @@ of(1, 2, 3, 4, 5, 6)
 
 ### async pipe
 
-Async pipe pozwala na prostszą obsługę observables w widoku aplikacji. Nie trzeba subskrybować i odsybskryboiwywać w pliku ts wystarczy to zrobić w pliku .html, a unsubscribe będzie automatyczne.
+Async pipe pozwala na prostszą obsługę observables w widoku aplikacji. Nie trzeba subskrybować i odsybskrybowywać w pliku ts wystarczy to zrobić w pliku .html, a unsubscribe będzie automatyczne.
 
 **przed:**
 
@@ -209,3 +211,108 @@ export class ProductListComponent implements OnInit {
   <!-- 'products' as normal variable  -->
 </table>
 ```
+
+### handling errors
+
+Błędy w rxjs można łapać za pomocą operatorów
+
+- przy użyciu error function
+
+```jsx
+this.beerService.getBeers().subscribe({
+  next: (beers) => {
+    console.log(beers);
+    this.beers = beers;
+    this.title = beers[0].name;
+  },
+  error: (e) => {
+    console.log(e);
+    this.title = 'ups';
+  },
+  complete: () => console.log('done'),
+});
+```
+
+- catchError() - operator który łapie błąd, ale emituje nową wartość. Trzeba przy nim zwrócić observable. Przydaje się kiedy w razie błędy chcemy emitować jakąś główną wartość.
+
+```jsx
+this.beerService
+  .getBeers()
+  .pipe(catchError(() => of([{ name: 'my default beer' }])))
+  .subscribe((beers) => {
+    console.log(beers);
+    this.beers = beers;
+    this.title = beers[0].name;
+  });
+```
+
+- throwError() - operator który wyrzuca błąd ale nie zwraca nowej wartości, jesli chcemy zrobić coś z errorem można użyć funkcji error w subscribe
+
+```jsx
+ngOnInit() {
+    this.beerService
+      .getBeers()
+      .pipe(
+        catchError(() => {
+          return throwError(() => new Error('ups sommething happend'));
+        })
+      )
+      .subscribe({
+        next: (beers) => {
+          console.log(beers);
+          this.beers = beers;
+          this.title = beers[0].name;
+        },
+        error: (err) => {
+          console.log(err);
+        },
+      });
+  }
+```
+
+### benefits of async pipe
+
+Zaletą **podejścia deklaratywnego nad proceduralnym** jest:
+
+- większa czytelność kodu
+- łatwiejsze zarządzanie subskrypcjami (automatyczne od subskrybowanie)
+- łatwiejsze użycie onPushChangeDetection strategy
+
+## 4. Łączenie źródeł danych
+
+### Types of Combination Operators Functions
+
+**Łączące w jedną wynikowa observable** - to takie operatory/funkcje, które pozwalają polączyć elementy emitowane z kilku Obserwables w jedną np. merge i concat. Są używane kiedy dane sa jednolite (nie trzeba ich przekształcać, są płaskie), trzeba je po prostu połączyć w jeden stream.
+
+![Untitled](images/Untitled.png)
+
+**Operatory spłaszczające** - upraszczają skompilowane emisje takie jak tablice spłaszczając je i łącząc ich elementy w jedną observable. Np. megeAll()
+
+![Untitled](images/Untitled%201.png)
+
+**Operatory łączące wartości** - operatory, które łączą wiele wartości emitowane przez różne observable w jedną. Należ do nich np combineLatest(), forkJoin(), withLatest()
+
+![Untitled](images/Untitled%202.png)
+
+- **combineLatest** - jest to creation function, która łączy ostatnio wyemitowane wartości w jedną uotput observable, nie zaczyna się wykonywać dopóki wszystkie observable nie wyemitują chociaż jednej wartości.
+
+![Untitled](images/Untitled%203.png)
+
+- **forkJoin** - creation function która czeka aż wszystkie source observables są zakończone i emituje ich połączone wartości, ma zastosowanie przy zapytaniach http, kiedy chcemy poczekać aż wszystkie zapytania skończą się wykonywać
+
+![Untitled](images/Untitled%204.png)
+
+- **withLatest** - jest operatorem wykonywanym na observable, której nasłuchujemy i która za każdym razem kiedy wyemituje jakąś wartość pobierze ostatnie wartości z observables przekazywanych jako parametry
+
+![Untitled](./images/Untitled%205.png)
+
+## 5. Reacting to actions
+
+### Subject i BehaviorSubject
+
+- **Subject** - specjalny typ Observable który jest jednocześnie:
+  - Observable z metodą subscribe()
+  - Observer-em z metodami next(), error() i complete()
+    Wiele subscribe-erów dzieli ten sam stream danych (subject is multicast)
+- **BehaviorSubject** - specjalny subject, który przyjmuje wartość domyślną i zatrzymuje ją jako buffer po wyemitowaniu wartości. Emituje on wartość domyślną jeśli nie wyemitował jeszcze żadnej wartości.
+  Jest szczególnie przydatny jeśli używamy go w **combineLatest([])**, ponieważ nie wyemituje ono wartości dopóki każdy przekazany mu stream nie wyemituje wartości
